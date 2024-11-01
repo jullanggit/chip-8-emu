@@ -34,15 +34,15 @@ impl Cpu {
             // 2 = Register y
             // 3 = Opcode Subgroup
             let decoded = [
-                (opcode[0] & 0xF0) >> 4,
-                opcode[0] & 0x0F,
                 (opcode[1] & 0xF0) >> 4,
                 opcode[1] & 0x0F,
+                (opcode[0] & 0xF0) >> 4,
+                opcode[0] & 0x0F,
             ];
 
             match decoded {
                 [0x8, _, _, 0x4] => self.add_xy(decoded[1], decoded[2]),
-                _ => todo!("opcode: {:04x}{:04x}", opcode[0], opcode[1]),
+                _ => todo!("opcode: {:02x}{:02x}", opcode[0], opcode[1]),
             }
         }
     }
