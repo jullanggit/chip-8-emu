@@ -1,6 +1,5 @@
 #![feature(let_chains)]
-
-use std::array;
+#![feature(generic_arg_infer)]
 
 #[derive(Debug)]
 struct Cpu {
@@ -12,38 +11,38 @@ struct Cpu {
 impl Default for Cpu {
     fn default() -> Self {
         Self {
-            registers: [0; 16],
+            registers: [0; _],
             program_counter: 0,
-            memory: [0; 2048],
+            memory: [0; _],
         }
     }
 }
 impl Cpu {
-    // TODO: Read from memory
-    fn read_opcode(&mut self) -> u16 {
-        let opcode = self.memory[self.program_counter as usize];
+    fn read_opcode(&mut self) -> [u8; 2] {
+        // to_le_bytes should just optimise out
+        let opcode = self.memory[self.program_counter as usize].to_le_bytes();
         self.program_counter += 1;
         opcode
     }
     /// Run the cpu
     fn run(&mut self) {
         while let opcode = self.read_opcode()
-            && opcode != 0
+            && opcode != [0, 0]
         {
             // 0 = Opcode Group
             // 1 = Register x
             // 2 = Register y
             // 3 = Opcode Subgroup
-            let decoded = array::from_fn(|index| {
-                // Inverted to make following the tutorial easier
-                let inverted_index = 3 - index;
-                let offset = inverted_index * 4;
-                ((opcode & (0x000F << offset)) >> offset) as u8
-            });
+            let decoded = [
+                (opcode[0] & 0xF0) >> 4,
+                opcode[0] & 0x0F,
+                (opcode[1] & 0xF0) >> 4,
+                opcode[1] & 0x0F,
+            ];
 
             match decoded {
                 [0x8, _, _, 0x4] => self.add_xy(decoded[1], decoded[2]),
-                _ => todo!("opcode: {opcode:04x}"),
+                _ => todo!("opcode: {:04x}{:04x}", opcode[0], opcode[1]),
             }
         }
     }
