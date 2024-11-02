@@ -1,63 +1,11 @@
 #![feature(let_chains)]
 #![feature(generic_arg_infer)]
+#![feature(transmutability)]
 
-#[derive(Debug)]
-struct Cpu {
-    // Last reg = carry flag (overflow)
-    registers: [u8; 16],
-    program_counter: u16,
-    memory: [u16; 2048], // 4 KB of memory
-}
-impl Default for Cpu {
-    fn default() -> Self {
-        Self {
-            registers: [0; _],
-            program_counter: 0,
-            memory: [0; _],
-        }
-    }
-}
-impl Cpu {
-    fn read_opcode(&mut self) -> [u8; 2] {
-        // to_le_bytes should just optimise out
-        let opcode = self.memory[self.program_counter as usize].to_le_bytes();
-        self.program_counter += 1;
-        opcode
-    }
-    /// Run the cpu
-    fn run(&mut self) {
-        while let opcode = self.read_opcode()
-            && opcode != [0, 0]
-        {
-            // 0 = Opcode Group
-            // 1 = Register x
-            // 2 = Register y
-            // 3 = Opcode Subgroup
-            let decoded = [
-                (opcode[1] & 0xF0) >> 4,
-                opcode[1] & 0x0F,
-                (opcode[0] & 0xF0) >> 4,
-                opcode[0] & 0x0F,
-            ];
+use cpu::Cpu;
 
-            match decoded {
-                [0x8, _, _, 0x4] => self.add_xy(decoded[1], decoded[2]),
-                _ => todo!("opcode: {:02x}{:02x}", opcode[0], opcode[1]),
-            }
-        }
-    }
-    // Adds register y to register x
-    fn add_xy(&mut self, x: u8, y: u8) {
-        let val_x = self.registers[x as usize];
-        let val_y = self.registers[y as usize];
+mod cpu;
 
-        let (result, overflow) = val_x.overflowing_add(val_y);
-
-        self.registers[x as usize] = result;
-
-        self.registers[15] = overflow as u8;
-    }
-}
 
 fn main() {
     let mut cpu = Cpu::default();
