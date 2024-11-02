@@ -25,6 +25,17 @@ impl Default for Cpu {
     }
 }
 impl Cpu {
+    pub fn with_memory(memory: &[u16]) -> Option<Self> {
+        assert!(memory.len() <= 2048);
+
+        let mut array = [0; _];
+        array[..memory.len()].copy_from_slice(memory);
+
+        Some(Self {
+            memory: array,
+            ..Default::default()
+        })
+    }
     fn read_opcode(&mut self) -> u16 {
         // to_le_bytes should just optimise out
         let opcode = self.memory[self.program_counter as usize];

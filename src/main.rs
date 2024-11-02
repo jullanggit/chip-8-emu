@@ -2,29 +2,30 @@
 #![feature(generic_arg_infer)]
 #![feature(transmutability)]
 
+use assemble::assemble;
 use cpu::Cpu;
 
+mod assemble;
 mod cpu;
 
+/// Calculates 5 + 10*2 + 10*2
+pub const ASSEMBLY: &str = concat!(
+    "load 0 5 ",  // Load 5 into register 0
+    "load 1 10 ", // Load 10 into register 1
+    "call 5 ",    //Call add_twice  TODO: Function syntax
+    "call 5 ",
+    "exit ",
+    // Function to add register 1 to register 0 twice
+    "add 0 1 ",
+    "add 0 1 ",
+    "ret "
+);
 
 fn main() {
-    let mut cpu = Cpu::default();
+    let binary = assemble(ASSEMBLY);
 
-    cpu.memory[0] = 0x8014; // 8 = 2 regs, 0 = reg0, 1 = reg1, 4 = additition
-    cpu.memory[1] = 0x8024;
-    cpu.memory[2] = 0x8034;
-    cpu.memory[3] = 0x8044;
-    cpu.memory[4] = 0x8054;
-
-    cpu.registers[1] = 15;
-    cpu.registers[2] = 10;
-    cpu.registers[3] = 7;
-    cpu.registers[4] = 32;
-    cpu.registers[5] = 2;
-
+    let mut cpu = Cpu::with_memory(&binary).unwrap();
     cpu.run();
 
-    assert_eq!(cpu.registers[0], 15 + 10 + 7 + 32 + 2);
-
-    println!("15 + 10 + 7 + 32 + 2 = {}", cpu.registers[0]);
+    println!("5 + 10 * 2 + 10 * 2 = {}", cpu.data_registers[0]);
 }
